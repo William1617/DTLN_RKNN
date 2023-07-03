@@ -135,7 +135,7 @@ void DTLN_RKNN(){
         for(int n=0;n<BLOCK_SHIFT;n++){
                 m_pEngine->in_buffer[n+BLOCK_LEN-BLOCK_SHIFT]=inputmicfile.samples[0][n+i*BLOCK_SHIFT];
             } 
-        RKNNInfer(m_pEngine);
+        RKNNInfer(m_pEngine,m_ctx);
         for(int j=0;j<BLOCK_SHIFT;j++){
             testoutdata.push_back(m_pEngine->out_buffer[j]);    //for one forward process save first BLOCK_SHIFT model output samples
         }
@@ -145,7 +145,7 @@ void DTLN_RKNN(){
 }
 
  
-void RKNNInfer(trg_engine* m_pEngine) {
+void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
 
 	float *in_mag ;
     float in_phase[FFT_OUT_SIZE] = { 0 };
