@@ -133,7 +133,7 @@ void DTLN_RKNN(){
         memmove(m_pEngine->in_buffer, m_pEngine->in_buffer + BLOCK_SHIFT, (BLOCK_LEN - BLOCK_SHIFT) * sizeof(float));
       
         for(int n=0;n<BLOCK_SHIFT;n++){
-                m_pEngine->in_buffer[n+BLOCK_LEN-BLOCK_SHIFT]=inputmicfile.samples[0][n+i*BLOCK_SHIFT];
+                m_pEngine->in_buffer[n+BLOCK_LEN-BLOCK_SHIFT]=inputwavfile.samples[0][n+i*BLOCK_SHIFT];
             } 
         RKNNInfer(m_pEngine,m_ctx);
         for(int j=0;j<BLOCK_SHIFT;j++){
