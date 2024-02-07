@@ -147,6 +147,17 @@ void DTLN_RKNN(){
         }
     }
     ExportWAV("rknntest.wav",testoutdata,SAMEPLERATE);
+for (int i=0;i<2:i++){
+        if(m_ctx[i]>0){
+            rknn_destroy(m_ctx[i]);
+        }
+    }
+    if (model1) {
+        free(model1);
+    }
+    if (model2) {
+        free(model2);
+    }
 	
 }
 
