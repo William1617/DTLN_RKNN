@@ -37,14 +37,20 @@ void DTLN_RKNN(){
 
     m_pEngine = new trg_engine;
 
-    m_pEngine->statesa_h1 =new float[DTLN_UNIT_SIZE]{0};
-    m_pEngine->statesa_c1 =new float[DTLN_UNIT_SIZE]{0};
-    m_pEngine->statesa_h2 =new float[DTLN_UNIT_SIZE]{0};
-    m_pEngine->statesa_c2 =new float[DTLN_UNIT_SIZE]{0};
-    m_pEngine->statesb_h1 =new float[DTLN_UNIT_SIZE]{0};
-    m_pEngine->statesb_c1 =new float[DTLN_UNIT_SIZE]{0};
-    m_pEngine->statesb_h2 =new float[DTLN_UNIT_SIZE]{0};
-    m_pEngine->statesb_c2 =new float[DTLN_UNIT_SIZE]{0};
+    m_pEngine->statesa.clear();
+    m_pEngine->statesb.clear();
+
+    m_pEngine->statesa.resize(4);
+    m_pEngine->statesb.resize(4);
+    for (int i=0;i<4;i++){
+        m_pEngine->statesa[i].clear();
+        m_pEngine->statesb[i].clear();
+        m_pEngine->statesa[i].resize(DTLN_UNIT_SIZE);
+        m_pEngine->statesb[i].resize(DTLN_UNIT_SIZE);
+        memset(m_pEngine->statesa[i].data(),0,DTLN_UNIT_SIZE*sizeof(float));
+        memset(m_pEngine->statesb[i].data(),0,DTLN_UNIT_SIZE*sizeof(float));
+
+    }
 
     int ret=0;
     int model_len1 = 0;
@@ -133,9 +139,9 @@ void DTLN_RKNN(){
         memmove(m_pEngine->in_buffer, m_pEngine->in_buffer + BLOCK_SHIFT, (BLOCK_LEN - BLOCK_SHIFT) * sizeof(float));
       
         for(int n=0;n<BLOCK_SHIFT;n++){
-                m_pEngine->in_buffer[n+BLOCK_LEN-BLOCK_SHIFT]=inputwavfile.samples[0][n+i*BLOCK_SHIFT];
+                m_pEngine->in_buffer[n+BLOCK_LEN-BLOCK_SHIFT]=inputmicfile.samples[0][n+i*BLOCK_SHIFT];
             } 
-        RKNNInfer(m_pEngine,m_ctx);
+        RKNNInfer(m_pEngine,m_ctx,m_ioNum);
         for(int j=0;j<BLOCK_SHIFT;j++){
             testoutdata.push_back(m_pEngine->out_buffer[j]);    //for one forward process save first BLOCK_SHIFT model output samples
         }
@@ -145,11 +151,11 @@ void DTLN_RKNN(){
 }
 
  
-void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
+void RKNNInfer(trg_engine* m_pEngine, rknn_context* m_ctx,rknn_input_output_num *m_ionum) {
 
-	float *in_mag ;
+	float in_mag[FFT_OUT_SIZE] ={0}; ;
     float in_phase[FFT_OUT_SIZE] = { 0 };
-    float *estimated_block ;
+    float estimated_block[DTLN_BLOCK_LEN] ={0};
 
     double fft_in[DTLN_BLOCK_LEN];
     std::vector<cpx_type> fft_res(DTLN_BLOCK_LEN);
@@ -161,14 +167,10 @@ void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
     std::vector<ptrdiff_t> stridel, strideo;
     strideo.push_back(sizeof(cpx_type));
     stridel.push_back(sizeof(double));
-    float *out_mask,*out_block ;
+    float out_mask[FFT_OUT_SIZE] ={0};
+    float out_block[DTLN_BLOCK_LEN]={0} ;
  
     int res2;
-    in_mag = new float[FFT_OUT_SIZE]{0};
-    estimated_block = new float[DTLN_BLOCK_LEN]{0};
-    out_block = new float[DTLN_BLOCK_LEN]{0};
-
-    out_mask = new float[FFT_OUT_SIZE]{0};
 
     rknn_perf_run runtime1, runtime2;
 	for (int i = 0; i < DTLN_BLOCK_LEN; i++){
@@ -219,10 +221,10 @@ void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
 
     input_details_a[0].buf=in_mag;
    
-    input_details_a[1].buf=m_pEngine->statesa_h1;
-    input_details_a[2].buf=m_pEngine->statesa_c1;
-    input_details_a[3].buf=m_pEngine->statesa_h2;
-    input_details_a[4].buf=m_pEngine->statesa_c2;
+    for (int i=0;i<4;i++){
+        m_input_details_a[1+i].buf=m_pEngine->statesa[i].data();
+
+    }
    
     res2=rknn_inputs_set(m_ctx[0], m_ioNum[0].n_input,input_details_a);
 
@@ -237,11 +239,9 @@ void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
     res2 = rknn_outputs_get(m_ctx[0], m_ioNum[0].n_output,output_details_a, NULL);
 
     out_mask =(float*)(output_details_a[0].buf);
-    memcpy(m_pEngine->statesa_h1,(float*)(output_details_a[1].buf),DTLN_UNIT_SIZE*sizeof(float)); 
-   // outstatea = (float*)(m_pEngine->output_details_a[1].buf);
-    memcpy(m_pEngine->statesa_c1,(float*)(output_details_a[2].buf),DTLN_UNIT_SIZE*sizeof(float)); 
-    memcpy(m_pEngine->statesa_h2,(float*)(output_details_a[3].buf),DTLN_UNIT_SIZE*sizeof(float)); 
-    memcpy(m_pEngine->statesa_c2,(float*)(output_details_a[4].buf),DTLN_UNIT_SIZE*sizeof(float));
+    for (int i=0;i<4;i++){
+        memcpy(m_pEngine->statesa[i].data(),(float*)(m_output_details_a[i+1].buf),DTLN_UNIT_SIZE*sizeof(float));
+    }
     //memcpy(m_pEngine->states_a,outstatea,DTLN_STATE_SIZE*sizeof(float));
 
 	for (int i = 0; i < FFT_OUT_SIZE; i++) {
@@ -257,10 +257,10 @@ void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
     res2 = rknn_outputs_release(m_ctx[0], m_ioNum[0].n_output, output_details_a);
     
     input_details_b[0].buf = estimated_block;
-    input_details_b[1].buf=m_pEngine->statesb_h1;
-    input_details_b[2].buf=m_pEngine->statesb_c1;
-    input_details_b[3].buf=m_pEngine->statesb_h2;
-    input_details_b[4].buf=m_pEngine->statesb_c2;
+    for (int i=0;i<4;i++){
+        m_input_details_b[1+i].buf=m_pEngine->statesb[i].data();
+
+    }
 
     res2=rknn_inputs_set(m_ctx[1], m_ioNum[1].n_input, input_details_b);
 
@@ -273,11 +273,9 @@ void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
 
     out_block =(float*)(output_details_b[0].buf);
     
-    memcpy(m_pEngine->statesb_h1,(float*)(output_details_b[1].buf),DTLN_UNIT_SIZE*sizeof(float)); 
-
-    memcpy(m_pEngine->statesb_c1,(float*)(output_details_b[2].buf),DTLN_UNIT_SIZE*sizeof(float)); 
-    memcpy(m_pEngine->statesb_h2,(float*)(output_details_b[3].buf),DTLN_UNIT_SIZE*sizeof(float)); 
-    memcpy(m_pEngine->statesb_c2,(float*)(output_details_b[4].buf),DTLN_UNIT_SIZE*sizeof(float));
+    for (int i=0;i<4;i++){
+        memcpy(m_pEngine->statesb[i].data(),(float*)(m_output_details_b[i+1].buf),DTLN_UNIT_SIZE*sizeof(float));
+    }
     
     res2 = rknn_outputs_release(m_ctx[1], m_ioNum[1].n_output, output_details_b);
     
@@ -285,7 +283,6 @@ void RKNNInfer(trg_engine* m_pEngine , rknn_context* m_ctx) {
         m_pEngine->out_buffer + DTLN_BLOCK_SHIFT, 
         (DTLN_BLOCK_LEN - DTLN_BLOCK_SHIFT) * sizeof(float));
     memset(m_pEngine->out_buffer + (DTLN_BLOCK_LEN - DTLN_BLOCK_SHIFT), 0, DTLN_BLOCK_SHIFT * sizeof(float));
-    //std::cout<<"outdata get"<<endl;
     for (int i = 0; i < DTLN_BLOCK_LEN; i++){
         m_pEngine->out_buffer[i] += out_block[i];
     }

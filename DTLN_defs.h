@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include <queue>
 
 
 #include <stdio.h>
@@ -34,8 +33,8 @@ struct trg_engine {
     float in_buffer[DTLN_BLOCK_LEN] = { 0 };
     float out_buffer[DTLN_BLOCK_LEN] = { 0 };
   
-    float *statesa_h1,*statesa_c1,*statesa_h2,*statesa_c2;
-    float *statesb_h1,*statesb_c1,*statesb_h2,*statesb_c2;
+    std::vector<std::vector<float>> statesa;
+    std::vector<std::vector<float>> statesb;
     
    
 };
