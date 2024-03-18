@@ -158,6 +158,7 @@ for (int i=0;i<2:i++){
     if (model2) {
         free(model2);
     }
+    delete m_pEngine;
 	
 }
 
