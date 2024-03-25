@@ -199,9 +199,11 @@ class DTLN_model():
         time_dat = Input(batch_shape=(1, self.blockLen))
         # calculate STFT
         mag,angle = Lambda(self.fftLayer)(time_dat)
-        # normalizing log magnitude stfts to get more robust against level variations
+        # rknn doesn't support log,cal it before inference
         if norm_stft:
-            mag_norm = InstantLayerNormalization()(tf.math.log(mag + 1e-7))
+            mag_norm=tf.expand_dims(mag,1)
+            mag_norm = InstantLayerNormalization()(mag_norm)
+            mag_norm=keras.layers.Reshape((1,-1))(mag_norm)
         else:
             # behaviour like in the paper
             mag_norm = mag
