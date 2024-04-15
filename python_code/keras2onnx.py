@@ -251,7 +251,9 @@ class DTLN_model():
         inc2_1 = Input(batch_shape=(1, self.numUnits))
         # normalizing log magnitude stfts to get more robust against level variations
         if norm_stft:
-            mag_norm = InstantLayerNormalization()(tf.math.log(mag + 1e-7))
+            mag_norm=tf.expand_dims(mag,1)
+            mag_norm = InstantLayerNormalization()(mag_norm)
+            mag_norm=keras.layers.Reshape((1,-1))(mag_norm)
         else:
             # behaviour like in the paper
             mag_norm = mag
