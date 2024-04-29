@@ -126,23 +126,23 @@ void DTLN_RKNN(){
         }
     }
 
-	float f32_output[BLOCK_LEN];
+	float f32_output[DTLN_BLOCK_LEN];
     std::vector<float>  testoutdata; //vector used to store enhanced data in a wav file
     AudioFile<float> inputwavfile;
     std::string testfile="./wav/testwav.wav";
     inputwavfile.load(testfile);
     int audiolen=inputfile.getNumSamplesPerChannel();
-    int process_num=(audiolen-BLOCK_LEN)/BLOCK_SHIFT;
+    int process_num=(audiolen-DTLN_BLOCK_LEN)/DTLN_BLOCK_SHIFT;
 
     for(int i=0;i<process_num;i++)
     {
-        memmove(m_pEngine->in_buffer, m_pEngine->in_buffer + BLOCK_SHIFT, (BLOCK_LEN - BLOCK_SHIFT) * sizeof(float));
+        memmove(m_pEngine->in_buffer, m_pEngine->in_buffer + DTLN_BLOCK_SHIFT, (DTLN_BLOCK_LEN - DTLN_BLOCK_SHIFT) * sizeof(float));
       
         for(int n=0;n<BLOCK_SHIFT;n++){
-                m_pEngine->in_buffer[n+BLOCK_LEN-BLOCK_SHIFT]=inputmicfile.samples[0][n+i*BLOCK_SHIFT];
+                m_pEngine->in_buffer[n+DTLN_BLOCK_LEN-DTLN_BLOCK_SHIFT]=inputmicfile.samples[0][n+i*DTLN_BLOCK_SHIFT];
             } 
         RKNNInfer(m_pEngine,m_ctx,m_ioNum);
-        for(int j=0;j<BLOCK_SHIFT;j++){
+        for(int j=0;j<DTLN_BLOCK_SHIFT;j++){
             testoutdata.push_back(m_pEngine->out_buffer[j]);    //for one forward process save first BLOCK_SHIFT model output samples
         }
     }
