@@ -184,7 +184,6 @@ void RKNNInfer(trg_engine* m_pEngine, rknn_context* m_ctx,rknn_input_output_num 
  
     int res2;
 
-    rknn_perf_run runtime1, runtime2;
 	for (int i = 0; i < DTLN_BLOCK_LEN; i++){
         fft_in[i] = m_pEngine->in_buffer[i];
 	}
