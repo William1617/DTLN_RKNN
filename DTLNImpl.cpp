@@ -54,7 +54,7 @@ void DTLN_RKNN(){
 
     int ret=0;
     int model_len1 = 0;
-    unsigned char* model1 =  __ReadModel(DTLNModelNameA, &model_len1);
+    unsigned char* model1 =  __ReadModel(DTLN_MODEL_A, &model_len1);
     rknn_context  m_ctx[2];
 	rknn_input_output_num                       m_ioNum[2];
     ret=rknn_init(&(m_ctx[0]),model1,model_len1,0,NULL);
@@ -64,7 +64,7 @@ void DTLN_RKNN(){
     }
     
     int model_len2 = 0;
-    unsigned char* model2 =  __ReadModel(DTLNModelNameB, &model_len2);
+    unsigned char* model2 =  __ReadModel(DTLN_MODEL_B, &model_len2);
 
     ret=rknn_init(&(m_ctx[1]),model2,model_len2,0,NULL);
     if (ret < 0) {
